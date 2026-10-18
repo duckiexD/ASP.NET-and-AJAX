@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Админ-панель</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f4f6f9;
+            color: #2c3e50;
+        }
+
+        header.admin-header {
+            background: #1f2a44;
+            color: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            header.admin-header .logo {
+                font-size: 20px;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }
+
+            header.admin-header nav a {
+                color: #cfd8e3;
+                text-decoration: none;
+                margin-left: 20px;
+                transition: color .2s;
+            }
+
+                header.admin-header nav a:hover {
+                    color: #fff;
+                }
+
+        .page-header {
+            background: #fff;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e1e6ee;
+        }
+
+            .page-header h1 {
+                margin: 0 0 5px;
+                font-size: 22px;
+            }
+
+            .page-header .subtitle {
+                color: #7a869a;
+                font-size: 14px;
+            }
+
+        main.container {
+            padding: 20px 30px;
+        }
+
+        footer.admin-footer {
+            text-align: center;
+            color: #7a869a;
+            padding: 20px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Админ-дашборд v1.0 -->
+    <header class="admin-header">
+        <div class="logo">Админ-панель</div>
+        <nav>
+            <a href="/Dashboard">Дашборд</a>
+            <a href="#">Настройки</a>
+        </nav>
+    </header>
+
+    @if (IsSectionDefined("PageHeader"))
+    {
+        <div class="page-header">
+            @await RenderSectionAsync("PageHeader", required: false)
+        </div>
+    }
+    else
+    {
+        <div class="page-header">
+            <h1>Панель управления</h1>
+        </div>
+    }
+
+    @* Средний уровень: секция Actions (кнопка «Печать» и др.) *@
+    @if (IsSectionDefined("Actions"))
+    {
+        <div class="page-actions">
+            @await RenderSectionAsync("Actions", required: false)
+        </div>
+    }
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <footer class="admin-footer">
+        © @DateTime.Now.Year Админ-панель
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

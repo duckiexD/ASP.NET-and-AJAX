@@ -1,0 +1,5 @@
+﻿@{
+    // Средний уровень: динамический layout через ViewData["Mode"]
+    var mode = ViewData["Mode"] as string;
+    Layout = mode == "Print" ? "_PrintLayout" : "_AppLayout";
+}

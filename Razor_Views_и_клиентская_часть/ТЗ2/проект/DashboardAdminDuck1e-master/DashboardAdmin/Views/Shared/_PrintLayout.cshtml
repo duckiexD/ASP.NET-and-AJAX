@@ -1,0 +1,36 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+@* Проброс секций в базовый _Layout — иначе Razor ругается *@
+@section PageHeader {
+    @await RenderSectionAsync("PageHeader", required: false)
+}
+
+@section Actions {
+    @await RenderSectionAsync("Actions", required: false)
+}
+
+@* Средний уровень: упрощённый layout для печати — только тело *@
+
+<div class="print-layout">
+    @RenderBody()
+</div>
+
+<style>
+    .print-layout {
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    }
+
+    /* В печатном режиме прячем лишнее из базового _Layout */
+    body > header.admin-header,
+    body > footer.admin-footer,
+    body > .page-actions {
+        display: none;
+    }
+</style>

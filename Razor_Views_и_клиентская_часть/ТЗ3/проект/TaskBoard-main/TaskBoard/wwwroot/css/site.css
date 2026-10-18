@@ -1,0 +1,142 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+/* ============================================================
+   Задание 6. Кастомные стили витрины
+   ============================================================ */
+
+.page-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .product-card {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.btn-order {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: #fff;
+}
+
+    .btn-order:hover,
+    .btn-order:focus {
+        background-color: #5a34a0;
+        border-color: #5a34a0;
+        color: #fff;
+    }
+
+/* ============================================================
+   Уровень 1. Адаптивный блок «Цены»
+   ============================================================ */
+.price-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+    .price-list .price-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.25rem 0;
+        border-bottom: 1px dashed #e9ecef;
+    }
+
+        .price-list .price-row:last-child {
+            border-bottom: none;
+        }
+
+@media (min-width: 576px) {
+    .price-list .price-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.price-list .price-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.price-list .price-value {
+    font-weight: 600;
+}
+
+.price-list .price-old {
+    text-decoration: line-through;
+    color: #adb5bd;
+}
+
+.price-list .price-new {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+/* ============================================================
+   Уровень 2. Тег-фильтр
+   ============================================================ */
+.category-pill {
+    border-radius: 50rem;
+    padding: 0.35rem 0.9rem;
+    transition: all 0.15s ease-in-out;
+}
+
+    .category-pill.active {
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+/* ============================================================
+   Уровень 3. Состояния карточек
+   ============================================================ */
+
+/* Хит продаж — усиленная тень + лёгкая пульсация при наведении */
+.product-card.shadow-sm {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .product-card.shadow-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+    }
+
+/* Нет в наличии — карточка слегка приглушена */
+.product-card.border-danger {
+    opacity: 0.85;
+}
+
+/* Большая скидка — зелёная рамка */
+.product-card.border-success {
+    border-width: 2px !important;
+}
+
+/* Бейджи в заголовке карточки — компактнее */
+.card-title .badge {
+    font-size: 0.7rem;
+    vertical-align: middle;
+}

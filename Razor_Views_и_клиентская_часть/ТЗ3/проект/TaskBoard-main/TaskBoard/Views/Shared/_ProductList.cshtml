@@ -1,0 +1,13 @@
+﻿@model List<TaskBoard.Models.Product>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">Ничего не найдено</div>
+}
+else
+{
+    foreach (var product in Model)
+    {
+        <partial name="_ProductCard" model="product" />
+    }
+}

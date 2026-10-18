@@ -1,0 +1,47 @@
+﻿@model DashboardCard
+
+@functions {
+    string GetTrendLabel(Trend t) => t switch
+    {
+        Trend.Up => "Рост",
+        Trend.Down => "Снижение",
+        Trend.Stable => "Стабильно",
+        _ => "—"
+    };
+
+    string GetTrendArrow(Trend t) => t switch
+    {
+        Trend.Up => "↑",
+        Trend.Down => "↓",
+        _ => "→"
+    };
+
+    // ✨ Лёгкий уровень: классификация значения
+    string GetValueClass(decimal value)
+    {
+        if (value < 0) return "Отрицательное";
+        if (value < 1000) return "Низкое";
+        if (value <= 10000) return "Среднее";
+        return "Высокое";
+    }
+}
+
+<div class="card">
+    <h3>@Model.Title</h3>
+
+    <div class="value @Model.Trend.ToString().ToLower()">
+        @GetTrendArrow(Model.Trend) @Model.Value.ToString("N0") @Model.Unit
+    </div>
+
+    @* Лёгкий уровень: вызов метода с параметром из Razor-разметки *@
+    <div class="value-class">Уровень: @GetValueClass(Model.Value)</div>
+
+    <div class="trend-label">@GetTrendLabel(Model.Trend)</div>
+
+    @if (Model.Value < 0)
+    {
+        <div class="badge-negative">Отрицательное значение</div>
+    }
+
+    <div class="description">@Model.Description</div>
+</div>

@@ -1,0 +1,87 @@
+﻿@model List<TaskBoard.Services.TaskItem>
+@{
+    ViewData["Title"] = "Список задач";
+    // Уровень 3 — текущий фильтр для подсветки кнопок и сохранения в ссылках
+    var currentStatus = ViewBag.Status as string ?? "all";
+}
+
+<h1>Задачи</h1>
+
+@* ===== Уровень 1. Счётчик задач ===== *@
+<div class="alert alert-info">
+    Всего задач: <strong>@ViewBag.Total</strong>,
+    выполнено: <strong>@ViewBag.Done</strong>,
+    в работе: <strong>@ViewBag.Active</strong>
+</div>
+
+@* ===== Уровень 3. Кнопки фильтра ===== *@
+<div class="mb-3">
+    <a href="/tasks?status=all"
+       class="btn btn-sm @(currentStatus == "all" ? "btn-primary" : "btn-outline-primary")">
+        Все
+    </a>
+    <a href="/tasks?status=active"
+       class="btn btn-sm @(currentStatus == "active" ? "btn-warning" : "btn-outline-warning")">
+        В работе
+    </a>
+    <a href="/tasks?status=done"
+       class="btn btn-sm @(currentStatus == "done" ? "btn-success" : "btn-outline-success")">
+        Готовые
+    </a>
+    <a href="/tasks/create" class="btn btn-sm btn-primary float-end">Новая задача</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p>Пока нет задач по этому фильтру.</p>
+}
+else
+{
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Заголовок</th>
+                <th>Статус</th>
+                <th>Дата</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in Model)
+            {
+                <tr>
+                    <td>@task.Id</td>
+                    <td><a href="/tasks/details/@task.Id">@task.Title</a></td>
+                    <td>
+                        @if (task.IsDone)
+                        {
+                            <span class="badge bg-success">Готово</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">В работе</span>
+                        }
+                    </td>
+                    <td>@task.CreatedAt.ToString("dd.MM HH:mm")</td>
+                    <td>
+                        @* Уровень 3: в action передаём ?status=..., чтобы фильтр сохранился *@
+                        @if (!task.IsDone)
+                        {
+                            <form method="post" action="/tasks/done/@task.Id?status=@currentStatus"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-success">✓</button>
+                            </form>
+                        }
+                        <form method="post" action="/tasks/delete/@task.Id?status=@currentStatus"
+                              class="d-inline" onsubmit="return confirm('Удалить?')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">✕</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

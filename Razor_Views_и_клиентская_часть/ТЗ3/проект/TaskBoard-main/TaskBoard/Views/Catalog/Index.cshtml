@@ -1,0 +1,50 @@
+﻿@model List<TaskBoard.Models.Product>
+@{
+    ViewData["Title"] = "Каталог";
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    var current = ViewBag.CurrentCategory as string ?? "all";
+}
+
+<h1 class="page-title">Каталог товаров</h1>
+
+@* ===== Задание 2.1. Поле поиска ===== *@
+<input type="text" id="searchInput" class="form-control mb-4"
+       placeholder="Поиск товаров..." />
+
+@if (TempData["CartMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["CartMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+    </div>
+}
+
+@* ===== Уровень 2 (Задание 2). Тег-фильтр ===== *@
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="/catalog?category=all"
+       class="btn btn-sm category-pill @(current == "all" ? "btn-primary active" : "btn-outline-secondary")">
+        Все
+    </a>
+    @foreach (var cat in categories)
+    {
+        var isActive = current == cat;
+        <a href="/catalog?category=@cat"
+           class="btn btn-sm category-pill @(isActive ? "btn-primary active" : "btn-outline-secondary")">
+            @cat
+        </a>
+    }
+</div>
+
+@* ===== Задание 2.1. Контейнер сетки с id="catalogGrid" ===== *@
+<div id="catalogGrid" class="row">
+    @foreach (var product in Model)
+    {
+        <partial name="_ProductCard" model="product" />
+    }
+</div>
+
+@* ===== Задание 6.2. Скрипты только для каталога ===== *@
+@section Scripts {
+    <script src="~/js/search.js" asp-append-version="true"></script>
+    <script src="~/js/cart.js" asp-append-version="true"></script>
+}

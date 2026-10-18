@@ -1,0 +1,42 @@
+﻿@model List<DashboardAdmin.ViewComponents.TrendSummaryItem>
+
+@functions {
+    string GetLabel(Trend t) => t switch
+    {
+        Trend.Up => "Рост ↑",
+        Trend.Down => "Снижение ↓",
+        Trend.Stable => "Стабильно →",
+        _ => "—"
+    };
+
+    string GetColor(Trend t) => t switch
+    {
+        Trend.Up => "#27ae60",
+        Trend.Down => "#e74c3c",
+        _ => "#2980b9"
+    };
+}
+
+<h3 style="margin-top:0;">Сводка по трендам</h3>
+
+@if (Model == null || !Model.Any())
+{
+    <p style="color:#95a5a6;">Нет данных</p>
+}
+else
+{
+    <ul style="list-style:none; padding:0; margin:0;">
+        @foreach (var item in Model)
+        {
+            <li style="padding:12px 0; border-bottom:1px solid #eef1f6;">
+                <div style="font-weight:600; color:@GetColor(item.Trend);">
+                    @GetLabel(item.Trend)
+                </div>
+                <div style="font-size:13px; color:#7a869a; margin-top:4px;">
+                    Карточек: <b>@item.Count</b><br />
+                    Сумма: <b>@item.TotalValue.ToString("N0")</b>
+                </div>
+            </li>
+        }
+    </ul>
+}

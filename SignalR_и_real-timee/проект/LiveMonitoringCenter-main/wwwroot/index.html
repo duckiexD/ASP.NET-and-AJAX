@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live-центр мониторинга</title>
+    <link rel="icon" href="data:,">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; display: flex; gap: 20px; background: #fff; color: #212529; }
+        .panel { border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; width: 300px; background: #f8f9fa; }
+        .log-panel { flex-grow: 1; height: 500px; overflow-y: auto; border: 1px solid #dee2e6; background: #fff; padding: 10px; }
+        .log-entry { margin-bottom: 5px; padding: 5px; border-radius: 4px; }
+        .log-system { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .log-room { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .log-private { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .log-default { background: #e2e3e5; color: #383d41; border-left: 4px solid #6c757d; }
+        .status { font-weight: bold; margin-bottom: 10px; padding: 5px; border-radius: 4px; }
+        .status-connected { color: #155724; background: #d4edda; }
+        .status-reconnecting { color: #856404; background: #fff3cd; }
+        .status-disconnected { color: #721c24; background: #f8d7da; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 3px; font-weight: 600; color: #495057; }
+        input { margin: 0; padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ced4da; border-radius: 4px; }
+        button { cursor: pointer; background: #007bff; color: white; border: none; padding: 8px; margin-top: 5px; border-radius: 4px; width: 100%; font-weight: 600; }
+        button:hover { background: #0056b3; }
+        h3, h4 { color: #212529; margin-top: 0; }
+        h4 { margin-top: 15px; font-size: 16px; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+        
+        /* от себя: стили для экрана никнейма */
+        #nicknameScreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #nicknameBox {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 350px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        #nicknameBox h2 { margin-top: 0; color: #212529; }
+        #nicknameBox input { font-size: 16px; padding: 12px; }
+        #nicknameBox button { font-size: 16px; padding: 12px; margin-top: 15px; }
+        
+        /* Скрываем основной интерфейс до установки никнейма */
+        #mainContent { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- от себя: экран ввода никнейма -->
+    <div id="nicknameScreen">
+        <div id="nicknameBox">
+            <h2>Добро пожаловать!</h2>
+            <div class="form-group">
+                <label for="nicknameInput">Введите ваш никнейм:</label>
+                <input type="text" id="nicknameInput" placeholder="Например: Вася" maxlength="20">
+            </div>
+            <button onclick="submitNickname()">Войти в чат</button>
+        </div>
+    </div>
+
+    <!-- Основной контент (скрыт до ввода никнейма) -->
+    <div id="mainContent" style="display: flex; gap: 20px; width: 100%;">
+        <div class="panel">
+            <h3>Статус и Инфо</h3>
+            <div id="connectionStatus" class="status status-disconnected">Соединение потеряно</div>
+            <div>Онлайн: <strong id="onlineCount">0</strong></div>
+            <div>Мой ник: <strong id="myNickname">-</strong></div>
+            <div>Мой ID: <span id="myConnectionId">...</span> <button onclick="copyId()" style="width:auto; padding: 4px 8px; font-size: 12px; margin-left: 5px;">Копировать</button></div>
+            
+            <!-- Задание 1: глобальный чат -->
+            <h4>Глобальный чат</h4>
+            <div class="form-group">
+                <label for="globalMessageInput">Сообщение всем</label>
+                <input type="text" id="globalMessageInput" placeholder="Введите сообщение...">
+            </div>
+            <button onclick="sendGlobalMessage()">Отправить всем</button>
+
+            <!-- Задание 2: комнаты -->
+            <h4>Комнаты</h4>
+            <div class="form-group">
+                <label for="roomNameInput">Имя комнаты</label>
+                <input type="text" id="roomNameInput" placeholder="alpha">
+            </div>
+            <button onclick="joinRoom()">Войти</button>
+            <button onclick="leaveRoom()" style="background: #dc3545;">Выйти</button>
+            <div>Текущая комната: <strong id="currentRoomDisplay">Нет</strong></div>
+
+            <h4>Чат комнаты</h4>
+            <div class="form-group">
+                <label for="roomMessageInput">Сообщение в комнату</label>
+                <input type="text" id="roomMessageInput" placeholder="Введите сообщение...">
+            </div>
+            <button onclick="sendRoomMessage()">Отправить в комнату</button>
+
+            <!-- Задание 5: приватные сообщения -->
+            <h4>Приватные сообщения</h4>
+            <div class="form-group">
+                <label for="privateTargetId">ID получателя</label>
+                <input type="text" id="privateTargetId" placeholder="Вставьте ID">
+            </div>
+            <div class="form-group">
+                <label for="privateMessageInput">Текст</label>
+                <input type="text" id="privateMessageInput" placeholder="Введите сообщение...">
+            </div>
+            <button onclick="sendPrivateMessage()">Отправить приватно</button>
+
+            <!-- Задание 3, 5: внешние HTTP запросы -->
+            <h4>Внешние HTTP запросы</h4>
+            <button onclick="triggerSystemMessage()" style="background: #6c757d;">Системное сообщение (HTTP)</button>
+            <div class="form-group">
+                <label for="httpRoomName">Комната</label>
+                <input type="text" id="httpRoomName" placeholder="Имя комнаты">
+            </div>
+            <div class="form-group">
+                <label for="httpRoomText">Текст</label>
+                <input type="text" id="httpRoomText" placeholder="Текст">
+            </div>
+            <button onclick="triggerHttpRoomNotify()" style="background: #28a745;">Уведомление в комнату (HTTP)</button>
+        </div>
+
+        <!-- Лента событий -->
+        <div class="log-panel" id="logPanel" role="log" aria-label="Лента событий"></div>
+    </div>
+
+    <script>
+        // Задание 4: переменная для хранения текущей комнаты
+        let currentRoom = null;
+        let myId = "";
+        let myNickname = ""; // НОВОЕ: мой никнейм
+
+        // Задание 4: подключение с автопереподключением
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/monitorhub")
+            .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+            .build();
+
+        // от себя: отправка никнейма на сервер
+        function submitNickname() {
+            const nick = document.getElementById("nicknameInput").value.trim();
+            if (nick.length < 2) {
+                alert("Никнейм должен быть не короче 2 символов");
+                return;
+            }
+            myNickname = nick;
+            connection.invoke("SetNickname", myNickname).catch(err => console.error(err));
+        }
+
+        // от себя: подтверждение установки никнейма от сервера
+        connection.on("NicknameSet", (nick) => {
+            document.getElementById("nicknameScreen").style.display = "none";
+            document.getElementById("mainContent").style.display = "flex";
+            document.getElementById("myNickname").innerText = nick;
+            log("Система", `Добро пожаловать, ${nick}!`, "log-system");
+        });
+
+        // НОВОЕ: обработка Enter в поле никнейма
+        document.getElementById("nicknameInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") submitNickname();
+        });
+
+        // Задание 4: обработчик начала переподключения
+        connection.onreconnecting(error => {
+            updateStatus("Переподключение...", "status-reconnecting");
+            log("Система", "Попытка переподключения...", "log-system");
+        });
+
+        // Задание 4: обработчик успешного переподключения + восстановление комнаты
+        connection.onreconnected(connectionId => {
+            updateStatus("Подключено", "status-connected");
+            myId = connectionId;
+            document.getElementById("myConnectionId").innerText = myId;
+            log("Система", `Переподключение выполнено. ID: ${myId}`, "log-system");
+            // НОВОЕ: восстанавливаем никнейм
+            connection.invoke("SetNickname", myNickname).catch(err => console.error(err));
+            if (currentRoom) {
+                connection.invoke("JoinRoom", currentRoom).catch(err => console.error(err));
+            }
+        });
+
+        // Задание 4: обработчик окончательного разрыва
+        connection.onclose(error => {
+            updateStatus("Соединение потеряно", "status-disconnected");
+            log("Система", "Соединение закрыто окончательно.", "log-system");
+        });
+
+        // Задание 1: слушатель подключения пользователя (теперь с никнеймом)
+        connection.on("UserConnected", (nickname) => {
+            log("Система", `Пользователь подключился: ${nickname}`, "log-system");
+        });
+
+        // Задание 1: слушатель отключения пользователя (теперь с никнеймом)
+        connection.on("UserDisconnected", (nickname) => {
+            log("Система", `Пользователь отключился: ${nickname}`, "log-system");
+        });
+
+        // Задание 1: слушатель глобального сообщения (теперь с никнеймом)
+        connection.on("ReceiveMessage", (nickname, text) => {
+            log(nickname, text, "log-default");
+        });
+
+        // Задание 2: слушатель вступления в комнату
+        connection.on("RoomJoined", (room) => {
+            currentRoom = room;
+            document.getElementById("currentRoomDisplay").innerText = room;
+            log("Система", `Вошли в комнату: ${room}`, "log-system");
+        });
+
+        // Задание 2: слушатель выхода из комнаты
+        connection.on("RoomLeft", (room) => {
+            if (currentRoom === room) {
+                currentRoom = null;
+                document.getElementById("currentRoomDisplay").innerText = "Нет";
+            }
+            log("Система", `Вышли из комнаты: ${room}`, "log-system");
+        });
+
+        // Задание 2: слушатель сообщения из комнаты (теперь с никнеймом)
+        connection.on("ReceiveRoomMessage", (nickname, text) => {
+            log(`${nickname} (в ${currentRoom})`, text, "log-room");
+        });
+
+        // Задание 3: слушатель обновления счётчика онлайн
+        connection.on("UpdateOnlineCount", (count) => {
+            document.getElementById("onlineCount").innerText = count;
+        });
+
+        // Задание 3: слушатель системного сообщения
+        connection.on("ReceiveSystemMessage", (text) => {
+            log("Система", text, "log-system");
+        });
+
+        // Задание 5: слушатель приватного сообщения (теперь с никнеймом)
+        connection.on("ReceivePrivateMessage", (nickname, text) => {
+            log(`Приват от ${nickname}`, text, "log-private");
+        });
+
+        // Запуск соединения
+        (async function start() {
+            try {
+                await connection.start();
+                updateStatus("Подключено", "status-connected");
+                myId = connection.connectionId;
+                document.getElementById("myConnectionId").innerText = myId;
+                log("Система", "Соединение установлено. Введите никнейм.", "log-system");
+            } catch (err) {
+                console.error(err);
+                setTimeout(() => start(), 5000);
+            }
+        })();
+
+        // Задание 1: отправка глобального сообщения
+        function sendGlobalMessage() {
+            const text = document.getElementById("globalMessageInput").value;
+            if (text) {
+                connection.invoke("SendMessage", text).catch(err => console.error(err));
+                document.getElementById("globalMessageInput").value = "";
+            }
+        }
+
+        // Задание 2: вступление в комнату
+        function joinRoom() {
+            const room = document.getElementById("roomNameInput").value.trim();
+            if (room) {
+                connection.invoke("JoinRoom", room).catch(err => console.error(err));
+            }
+        }
+
+        // Задание 2: выход из комнаты
+        function leaveRoom() {
+            if (currentRoom) {
+                connection.invoke("LeaveRoom", currentRoom).catch(err => console.error(err));
+            }
+        }
+
+        // Задание 2: отправка сообщения в комнату
+        function sendRoomMessage() {
+            const text = document.getElementById("roomMessageInput").value;
+            if (text && currentRoom) {
+                connection.invoke("SendMessageToRoom", currentRoom, text).catch(err => console.error(err));
+                document.getElementById("roomMessageInput").value = "";
+            } else if (!currentRoom) {
+                log("Система", "Сначала войдите в комнату!", "log-system");
+            }
+        }
+
+        // Задание 5: отправка приватного сообщения
+        function sendPrivateMessage() {
+            const targetId = document.getElementById("privateTargetId").value.trim();
+            const text = document.getElementById("privateMessageInput").value;
+            if (targetId && text) {
+                connection.invoke("SendPrivateMessage", targetId, text).catch(err => console.error(err));
+                document.getElementById("privateMessageInput").value = "";
+            }
+        }
+
+        // Задание 3: HTTP POST для системного сообщения
+        async function triggerSystemMessage() {
+            await fetch("/api/system/message", { method: "POST" });
+        }
+
+        // Задание 5: HTTP POST для уведомления в комнату
+        async function triggerHttpRoomNotify() {
+            const room = document.getElementById("httpRoomName").value.trim();
+            const text = document.getElementById("httpRoomText").value;
+            if (room && text) {
+                await fetch(`/api/room/${encodeURIComponent(room)}/notify?text=${encodeURIComponent(text)}`, { method: "POST" });
+            }
+        }
+
+        // Утилита: добавление записи в ленту
+        function log(sender, text, cssClass) {
+            const panel = document.getElementById("logPanel");
+            const entry = document.createElement("div");
+            entry.className = `log-entry ${cssClass}`;
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<strong>[${time}] ${sender}:</strong> ${text}`;
+            panel.appendChild(entry);
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        // Утилита: обновление статуса
+        function updateStatus(text, cssClass) {
+            const el = document.getElementById("connectionStatus");
+            el.innerText = text;
+            el.className = `status ${cssClass}`;
+        }
+
+        // Утилита: копирование ID
+        function copyId() {
+            navigator.clipboard.writeText(myId).then(() => {
+                log("Система", "ID скопирован", "log-system");
+            });
+        }
+    </script>
+</body>
+</html>

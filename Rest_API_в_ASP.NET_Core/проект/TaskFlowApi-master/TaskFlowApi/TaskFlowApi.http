@@ -1,0 +1,78 @@
+﻿@baseUrl = https://localhost:7001
+
+### ===== УРОВЕНЬ 1: БАЗОВЫЙ CRUD =====
+
+### Создать проект
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+
+{ "name": "Веб-сайт", "description": "Корпоративный портал" }
+
+### Получить все проекты
+GET {{baseUrl}}/api/projects
+
+### Получить проект по ID
+GET {{baseUrl}}/api/projects/1
+
+### Обновить проект
+PUT {{baseUrl}}/api/projects/1
+Content-Type: application/json
+
+{ "name": "Веб-сайт v2", "description": "Обновлённый портал" }
+
+### Валидация: пустое имя → 400
+POST {{baseUrl}}/api/projects
+Content-Type: application/json
+
+{ "name": "", "description": "test" }
+
+### Несуществующий проект → 404
+GET {{baseUrl}}/api/projects/9999
+
+### Удалить проект
+DELETE {{baseUrl}}/api/projects/1
+
+### ===== ЗАДАЧИ v1 (Deprecated) =====
+
+### Создать задачу (v1)
+POST {{baseUrl}}/api/v1/tasks
+Content-Type: application/json
+
+{ "title": "Сверстать главную", "status": "ToDo", "projectId": 1 }
+
+### Получить задачу (v1)
+GET {{baseUrl}}/api/v1/tasks/1
+
+### Список задач (v1)
+GET {{baseUrl}}/api/v1/tasks
+
+### ===== ЗАДАЧИ v2 (Priority, без Description) =====
+
+### Получить задачу (v2)
+GET {{baseUrl}}/api/v2/tasks/1
+
+### Список задач (v2)
+GET {{baseUrl}}/api/v2/tasks
+
+### Создать задачу (v2, с Priority)
+POST {{baseUrl}}/api/v2/tasks
+Content-Type: application/json
+
+{ "title": "Настроить CI/CD", "priority": "High", "projectId": 1 }
+
+### ===== КОММЕНТАРИИ =====
+
+### Добавить комментарий к задаче 1
+POST {{baseUrl}}/api/tasks/1/comments
+Content-Type: application/json
+
+{ "content": "Нужно уточнить ТЗ", "authorId": 1 }
+
+### Получить комментарии задачи 1
+GET {{baseUrl}}/api/tasks/1/comments
+
+### Комментарии к несуществующей задаче → 404
+GET {{baseUrl}}/api/tasks/999/comments
+
+### Удалить комментарий
+DELETE {{baseUrl}}/api/comments/1

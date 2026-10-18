@@ -1,0 +1,90 @@
+﻿@model TaskBoard.Models.Product
+@{
+    // Уровень 3 (Задание 2). Динамические классы
+    var borderClass = Model.Stock == 0
+        ? "border-danger"
+        : Model.IsBigDiscount
+            ? "border-success"
+            : Model.IsHit
+                ? "border-primary"
+                : "";
+
+    var badgeClass = Model.IsHit
+        ? "bg-success text-white"
+        : "bg-secondary text-white";
+
+    var shadowClass = Model.IsHit ? "shadow-sm" : "";
+}
+
+<div class="col-12 col-md-6 col-lg-4">
+    <div class="card product-card h-100 mb-4 shadow-sm @borderClass @shadowClass">
+        <img src="@Model.ImageUrl" class="card-img-top img-fluid" alt="@Model.Name" />
+
+        <div class="card-body d-flex flex-column">
+
+            <h5 class="card-title">
+                @Model.Name
+
+                @if (Model.IsHit)
+                {
+                    <span class="badge @badgeClass ms-1">ХИТ</span>
+                }
+                @if (Model.Stock == 0)
+                {
+                    <span class="badge bg-danger ms-1">Нет в наличии</span>
+                }
+                @if (Model.IsBigDiscount)
+                {
+                    <span class="badge bg-success ms-1">Большая скидка</span>
+                }
+                else if (!string.IsNullOrEmpty(Model.Badge))
+                {
+                    <span class="badge bg-danger ms-1">@Model.Badge</span>
+                }
+            </h5>
+
+            <p class="card-text text-muted small">@Model.Description</p>
+
+            <ul class="price-list mt-auto mb-2">
+                @if (Model.OldPrice.HasValue)
+                {
+                    <li class="price-row">
+                        <span class="price-label">Обычная цена:</span>
+                        <span class="price-value price-old">@Model.OldPrice.Value.ToString("C")</span>
+                    </li>
+                    <li class="price-row">
+                        <span class="price-label">Со скидкой:</span>
+                        <span class="price-value price-new">@Model.Price.ToString("C")</span>
+                    </li>
+                    <li class="price-row">
+                        <span class="price-label">Скидка:</span>
+                        <span class="price-value text-success fw-bold">−@Model.DiscountPercent%</span>
+                    </li>
+                }
+                else
+                {
+                    <li class="price-row">
+                        <span class="price-label">Цена:</span>
+                        <span class="price-value price-new">@Model.Price.ToString("C")</span>
+                    </li>
+                }
+            </ul>
+
+            @* ===== Задание 2.2. Кнопка с data-product-id ===== *@
+            @if (Model.Stock == 0)
+            {
+                <button type="button" class="btn btn-secondary w-100" disabled>
+                    Нет в наличии
+                </button>
+            }
+            else
+            {
+                <button type="button"
+                        class="btn btn-primary w-100 add-to-cart"
+                        data-product-id="@Model.Id">
+                    В корзину
+                </button>
+            }
+        </div>
+    </div>
+</div>
